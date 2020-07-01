@@ -74,7 +74,7 @@ def parse_markdown(filepath: str) -> Dict:
     md = markdown.Markdown(
         extensions=[
             'meta',
-            TocExtension(title='Contents', permalink=True),
+            TocExtension(title='Contents', permalink=True, toc_depth=2),
             CodeHiliteExtension(guess_lang=False),
         ],
         output_format='html5',

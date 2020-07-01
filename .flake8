@@ -1,0 +1,5 @@
+[flake8]
+ignore = A003,B011,C408,E122,E203,E303,E302,E402,E501,W503,W293,W391
+exclude =
+    .git/*
+max-complexity = 20

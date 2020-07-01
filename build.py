@@ -8,12 +8,14 @@ from pathlib import Path
 from shutil import copytree
 from typing import Dict
 from typing import List
+from typing import Optional
 from typing import Tuple
 
 import markdown
-from markdown.extensions.toc import TocExtension
+from jinja2 import Environment
+from jinja2 import FileSystemLoader
 from markdown.extensions.codehilite import CodeHiliteExtension
-from jinja2 import Environment, FileSystemLoader
+from markdown.extensions.toc import TocExtension
 from slugify import slugify
 
 
@@ -23,8 +25,8 @@ class Page:
     template: str
     listing: bool = False
     create_detail_pages: bool = False
-    detail_page_template: str = None
-    source_dir: str = None
+    detail_page_template: Optional[str] = None
+    source_dir: Optional[str] = None
 
 
 BUILD_PATH = 'build'
@@ -34,16 +36,20 @@ TEMPLATES_PATH = 'templates'
 PAGES = [
     Page(category='404', template='404'),
     Page(category='about', template='about'),
-    Page(category='blog',
-         template='blog',
-         listing=True,
-         create_detail_pages=True,
-         detail_page_template='post',
-         source_dir='content/blog'),
-    Page(category='projects',
-         template='projects',
-         listing=True,
-         source_dir='content/projects'),
+    Page(
+        category='blog',
+        template='blog',
+        listing=True,
+        create_detail_pages=True,
+        detail_page_template='post',
+        source_dir='content/blog',
+    ),
+    Page(
+        category='projects',
+        template='projects',
+        listing=True,
+        source_dir='content/projects',
+    ),
 ]
 
 
@@ -71,7 +77,7 @@ def parse_markdown(filepath: str) -> Dict:
             TocExtension(title='Contents', permalink=True),
             CodeHiliteExtension(guess_lang=False),
         ],
-        output_format='html5'
+        output_format='html5',
     )
 
     return {
@@ -115,7 +121,7 @@ def build_tag_page(page_category: str, tag: str, pages: List[Dict]):
     template = env.get_template(f'{page_category}.html')
     write_file(
         f'{page_category}/tag/{tag}',
-        template.render(category=page_category, tag=tag, items=items)
+        template.render(category=page_category, tag=tag, items=items),
     )
 
 
@@ -124,7 +130,7 @@ def build_detail_pages(parent_page, detail_pages: List[Dict]):
         template = env.get_template(f'{parent_page.detail_page_template}.html')
         write_file(
             f"{parent_page.category}/{detail_page['slug']}",
-            template.render(category=parent_page.category, page=detail_page)
+            template.render(category=parent_page.category, page=detail_page),
         )
 
 
@@ -135,10 +141,11 @@ def build_list_page(page: Page) -> Tuple[List[Dict], Dict]:
     :return:
     """
     items = []
-    tags = defaultdict(list)
+    tags: Dict[str, List] = defaultdict(list)
+    source_dir = str(page.source_dir)
 
-    for f in os.listdir(page.source_dir):
-        filepath = join(page.source_dir, f)
+    for f in os.listdir(source_dir):
+        filepath = join(source_dir, f)
 
         if not isfile(filepath):
             continue
@@ -175,16 +182,17 @@ def build_simple_page(page: Page):
 
 if __name__ == "__main__":
     env = Environment(
+        autoescape=True,
         loader=FileSystemLoader(searchpath=TEMPLATES_PATH),
         trim_blocks=True,
-        lstrip_blocks=True
+        lstrip_blocks=True,
     )
 
     # Ensure some build directories exist
     Path(f'{BUILD_PATH}/blog/tag/').mkdir(parents=True, exist_ok=True)
 
     # A place to keep track of all tags
-    all_tags = defaultdict(list)
+    all_tags: Dict[Tuple[str, str], List] = defaultdict(list)
 
     # Build each top level page
     for page in PAGES:

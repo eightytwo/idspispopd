@@ -41,10 +41,20 @@ The following is the structure of my website and the builder code has constant v
 
 ## Building the website
 
-With the static files, content, and templates in place, building the website is as simple as running:
+First ensure the requirements are installed. Use a Python 'virtual environment'
+if desired - the example below uses the `venv` module of Python 3.
 
 ```sh
-$ python3 build.py
+$ python3 -m venv env
+$ . env/bin/activate
+(env) $ pip install -r requirements.txt
+```
+
+Then, with the static files, content, and templates in place, building the
+website is as simple as running:
+
+```sh
+(env) $ python3 build.py
 ```
 
 A `build` directory will be created with the following structure.

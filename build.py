@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from shutil import copytree
+from shutil import rmtree
 from typing import Dict
 from typing import List
 from typing import Optional
@@ -59,6 +60,7 @@ def write_file(name: Path, content: str, suffix: str = ".html"):
     :param suffix: The extension of the file.
     """
     file = BUILD_PATH / name.with_suffix(suffix)
+    file.parent.mkdir(parents=True, exist_ok=True)
     file.write_text(content, encoding="utf-8", errors="xmlcharrefreplace")
 
 
@@ -132,7 +134,8 @@ def build_detail_pages(parent_page, detail_pages: List[Dict]):
      created for them.
     """
     for detail_page in detail_pages:
-        output_file = Path(parent_page.category, detail_page['slug'])
+        output_dir = Path(parent_page.category, detail_page['slug'])
+        output_file = output_dir / 'index'
         template = env.get_template(f'{parent_page.detail_page_template}.html')
         write_file(
             output_file,
@@ -144,7 +147,7 @@ def build_detail_pages(parent_page, detail_pages: List[Dict]):
         # directory.
         assets_dir = parent_page.source_dir / detail_page['filename'].stem
         if assets_dir.is_dir():
-            copytree(assets_dir, Path(BUILD_PATH) / output_file, dirs_exist_ok=True)
+            copytree(assets_dir, Path(BUILD_PATH, output_dir), dirs_exist_ok=True)
 
 
 def build_list_page(page: Page) -> Tuple[List[Dict], Dict]:
@@ -206,11 +209,14 @@ if __name__ == "__main__":
         lstrip_blocks=True,
     )
 
-    # Copy the static files to the build directory
-    copytree(STATIC_ASSETS_PATH, BUILD_PATH, dirs_exist_ok=True)
+    # Clean the build directory
+    rmtree(BUILD_PATH)
 
     # Ensure some build directories exist
     Path(f'{BUILD_PATH}/blog/tag/').mkdir(parents=True, exist_ok=True)
+
+    # Copy the static files to the build directory
+    copytree(STATIC_ASSETS_PATH, BUILD_PATH, dirs_exist_ok=True)
 
     # A place to keep track of all tags
     all_tags: Dict[Tuple[str, str], List] = defaultdict(list)

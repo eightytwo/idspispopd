@@ -210,7 +210,8 @@ if __name__ == "__main__":
     )
 
     # Clean the build directory
-    rmtree(BUILD_PATH)
+    if Path(BUILD_PATH).exists():
+        rmtree(BUILD_PATH)
 
     # Ensure some build directories exist
     Path(f'{BUILD_PATH}/blog/tag/').mkdir(parents=True, exist_ok=True)
